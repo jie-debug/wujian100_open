@@ -1,0 +1,51 @@
+Some changes modified by jie for passing simulation.
+
+#1. Download tarball "riscv64-elf-x86_64-20190731.tar.gz" then add toolchain (risv C compiler) in /lib/Makefile
+#jie TOOL_EXTENSION	= ${TOOL_PATH}/bin/riscv64-unknown-elf-
+#jie add TOOL_PATH
+TOOL_PATH = ../riscv_toolchain_elf
+TOOL_EXTENSION	= ${TOOL_PATH}/bin/riscv64-unknown-elf-
+
+
+#2 Compile error
+../riscv_toolchain_elf/bin/riscv64-unknown-elf-gcc -Tlinker.lcf -nostartfiles -march=rv32emc -mabi=ilp32e -lc -lgcc  crt0.o __dtostr.o fprintf.o fputc.o getc.o getchar.o gpio_test.o __isinf.o __isnan.o __lltostr.o __ltostr.o printf.o putc.o putchar.o puts.o snprintf.o sprintf.o vfprintf.o __v_printf.o vprintf.o vsnprintf.o vsprintf.o -o gpio_test.elf -lm 
+../riscv_toolchain_elf/bin/riscv64-unknown-elf-objcopy -O srec gpio_test.elf gpio_test.hex 
+rm -f *.pat
+#../tools/Srec2vmem.py gpio_test.hex test.pat
+../tools/Srec2vmem.py -i gpio_test.hex -o test.pat
+Traceback (most recent call last):
+  File "../tools/Srec2vmem.py", line 182, in <module>
+    main(sys.argv[1:])
+  File "../tools/Srec2vmem.py", line 179, in main
+    hex2vmem(o_argv_info)
+  File "../tools/Srec2vmem.py", line 158, in hex2vmem
+    for i in range(mem_addr_incr - 1):
+TypeError: 'float' object cannot be interpreted as an integer
+make: *** [gpio_test.pat] Error 1
+can't make at ../tools/run_case line 208.
+
+Solution: modify /tools/Srec2vmem.py file, line 147 
+cur_mem_addr = line_addr / 4 -> cur_mem_addr = line_addr // 4
+
+#3 Compile error
+../riscv_toolchain_elf/bin/riscv64-unknown-elf-gcc -Tlinker.lcf -nostartfiles -march=rv32emc -mabi=ilp32e -lc -lgcc  crt0.o __dtostr.o fprintf.o fputc.o getc.o getchar.o gpio_test.o __isinf.o __isnan.o __lltostr.o __ltostr.o printf.o putc.o putchar.o puts.o snprintf.o sprintf.o vfprintf.o __v_printf.o vprintf.o vsnprintf.o vsprintf.o -o gpio_test.elf -lm 
+../riscv_toolchain_elf/bin/riscv64-unknown-elf-objcopy -O srec gpio_test.elf gpio_test.hex 
+rm -f *.pat
+#../tools/Srec2vmem.py gpio_test.hex test.pat
+../tools/Srec2vmem.py -i gpio_test.hex -o test.pat
+Traceback (most recent call last):
+  File "../tools/Srec2vmem.py", line 182, in <module>
+    main(sys.argv[1:])
+  File "../tools/Srec2vmem.py", line 179, in main
+    hex2vmem(o_argv_info)
+  File "../tools/Srec2vmem.py", line 133, in hex2vmem
+    line_addr = cur_line[line_addr_idx:line_addr_end]
+TypeError: slice indices must be integers or None or have an __index__ method
+make: *** [gpio_test.pat] Error 1
+
+Solution: modify /tools/Srec2vmem.py file, line 133,134 
+        line_addr = cur_line[line_addr_idx:line_addr_end]
+        line_data = cur_line[line_data_idx:line_data_end]
+        ->
+        line_addr = cur_line[int(line_addr_idx):int(line_addr_end)]
+        line_data = cur_line[int(line_data_idx):int(line_data_end)]
